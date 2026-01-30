@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#6366f1" />
+  <title>Game Edukasi Anak</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="https://picsum.photos/seed/icon/192/192" type="image/jpeg"> <!-- Placeholder Icon -->
+
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --accent: #fde68a;
+      --bg-start: #e0e7ff;
+      --bg-end: #cffafe;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.2);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden; /* Mencegah scroll berlebih */
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px 20px 90px 20px; /* Padding bawah untuk sidebar */
+      width: 100%;
+    }
+
+    .screen {
+      background: var(--surface);
+      width: 100%;
+      max-width: 500px; /* Lebar maksimal lebih lega */
+      padding: 30px 20px;
+      border-radius: var(--radius-lg);
+      text-align: center;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: opacity 0.3s ease;
+      height: 100%;
+      max-height: 800px;
+      justify-content: center;
+    }
+
+    .hidden { display: none !important; }
+
+    h1 {
+      font-size: 28px;
+      margin: 0 0 10px 0;
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .info {
+      font-size: 16px;
+      margin-bottom: 20px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Input Styles */
+    .home-input { width: 100%; margin: 20px 0; }
+    input {
+      width: 100%;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      border: 2px solid #e2e8f0;
+      font-size: 18px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--primary); }
+
+    /* Buttons */
+    .main {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
+      transition: transform 0.1s, background 0.2s;
+    }
+    .main:active { transform: scale(0.98); background: var(--primary-dark); }
+
+    /* Level Buttons */
+    .levels { display: flex; gap: 12px; justify-content: center; margin: 20px 0; width: 100%; }
+    .levels button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .levels button:active { transform: scale(0.95); }
+    .lv1 { background: #bbf7d0; color: #166534; }
+    .lv2 { background: #fde68a; color: #854d0e; }
+    .lv3 { background: #fecaca; color: #991b1b; }
+
+    /* Onet Grid */
+    .grid {
+      display: grid;
+      /* Responsif: Kolom akan menyesuaikan */
+      grid-template-columns: repeat(4, 1fr); 
+      gap: 10px;
+      width: 100%;
+      max-width: 320px; /* Batas lebar grid agar tetap rapi */
+      margin: 0 auto;
+    }
+
+    .tile {
+      aspect-ratio: 1 / 1; /* Membuat kotak sempurna */
+      border-radius: var(--radius-md);
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: clamp(24px, 5vw, 32px); /* Ukuran font responsif */
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .tile:active { transform: scale(0.9); }
+    .tile.selected { background: var(--primary); color: white; border-color: var(--primary); transform: scale(1.05); box-shadow: 0 0 15px rgba(99,102,241,0.4); }
+    .tile.matched { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .score { margin-top: 20px; font-size: 20px; font-weight: 800; color: var(--text); }
+
+    /* Duck Area */
+    .duck-area {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1 / 1;
+      margin: 10px auto;
+      background: #ecfeff;
+      border: 4px solid #a5f3fc;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      touch-action: none; /* Mencegah scroll saat tap */
+    }
+
+    .duck {
+      position: absolute;
+      font-size: 48px;
+      cursor: pointer;
+      transition: top 0.3s ease, left 0.3s ease; /* Animasi gerakan halus */
+      user-select: none;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    }
+    .duck:active { transform: scale(1.2); }
+
+    /* Sidebar / Bottom Nav */
+    .sidebar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 400px;
+      height: 70px;
+      background: var(--surface);
+      border-radius: 35px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 0 10px;
+      box-shadow: 0 10px 40px -5px rgba(0,0,0,0.15);
+      z-index: 100;
+    }
+
+    .sidebar button {
+      background: transparent;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar button.active {
+      background: var(--primary);
+      color: white;
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- MENU -->
+  <div id="screen-menu" class="screen">
+    <div style="font-size: 64px; margin-bottom: 10px;">🎮</div>
+    <h1>Game Edukasi</h1>
+    <div class="info">Masukkan nama kamu untuk mulai</div>
+    <div class="home-input">
+      <input id="childName" placeholder="Nama Anak..." />
+    </div>
+    <button class="main" onclick="saveName()">Mulai Bermain ▶</button>
+  </div>
+
+  <!-- ONET -->
+  <div id="screen-onet" class="screen hidden">
+    <h1>🧩 Cocokkan Ikon</h1>
+    <div class="info">Pilih 2 ikon yang sama!</div>
+    <div class="levels">
+      <button class="lv1" onclick="startOnet(1)">Mudah</button>
+      <button class="lv2" onclick="startOnet(2)">Sedang</button>
+      <button class="lv3" onclick="startOnet(3)">Sulit</button>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="onetScore" class="score">Skor: 0</div>
+  </div>
+
+  <!-- DUCK -->
+  <div id="screen-duck" class="screen hidden">
+    <h1>🦆 Kejar Bebek!</h1>
+    <div class="info">Ketuk bebek secepatnya!</div>
+    
+    <div id="duckArea" class="duck-area">
+      <div id="duck" class="duck">🦆</div>
+    </div>
+
+    <div style="display: flex; justify-content: space-around; width: 100%; margin-top: 15px;">
+        <div class="info" style="margin:0">⏳ <span id="duckTimer">30</span>s</div>
+        <div class="score" style="margin:0" id="duckScore">0</div>
+    </div>
+    <div id="duckHigh" class="info" style="margin-top: 10px;">Rekor: 0</div>
+  </div>
+
+</div>
+
+<div class="sidebar">
+  <button id="btnMenu" class="active" onclick="showScreen('menu')">🏠</button>
+  <button id="btnOnet" onclick="showScreen('onet')">🧩</button>
+  <button id="btnDuck" onclick="showScreen('duck')">🦆</button>
+</div>
+
+<script>
+// PWA SERVICE WORKER REGISTRATION
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('Service Worker: Terdaftar'))
+      .catch(err => console.log('Service Worker: Gagal', err));
+  });
+}
+
+let childName='';
+const screens=['menu','onet','duck'];
+
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='id-ID';
+  u.rate=0.95;
+  u.pitch=1.2;
+  u.volume=1;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function showScreen(name){
+  screens.forEach(s=>document.getElementById('screen-'+s).classList.add('hidden'));
+  document.getElementById('screen-'+name).classList.remove('hidden');
+  
+  document.querySelectorAll('.sidebar button').forEach(b=>b.classList.remove('active'));
+  const activeBtn = document.getElementById('btn'+name.charAt(0).toUpperCase()+name.slice(1));
+  if(activeBtn) activeBtn.classList.add('active');
+
+  if(name==='duck') resetDuck();
+}
+
+function saveName(){
+  const v=document.getElementById('childName').value.trim();
+  if(!v){alert('Isi nama dulu ya');return;}
+  childName=v;
+  speak(`Halo ${childName}, yuk main!`);
+  showScreen('onet');
+}
+
+// ===== ONET =====
+const allIcons=['🍎','🚗','🐟','⭐','❤️','☀️','🔔','🍃'];
+const grid=document.getElementById('grid');
+const onetScoreText=document.getElementById('onetScore');
+let firstTile=null,lock=false,matched=0,score=0,totalPairs=0;
+
+function startOnet(level){
+  grid.innerHTML='';
+  firstTile=null;lock=false;matched=0;score=0;
+
+  const pairCount = level===1?4:level===2?6:8;
+  totalPairs = pairCount;
+
+  const icons = allIcons.slice(0,pairCount);
+  const tiles = [...icons, ...icons].sort(()=>Math.random()-0.5);
+
+  // Hapus setingan inline style grid kolom agar responsif via CSS
+  onetScoreText.textContent='Skor: 0';
+
+  tiles.forEach(icon=>{
+    const tile=document.createElement('div');
+    tile.className='tile';
+    tile.textContent = icon;
+
+    tile.onclick=()=>{
+      if(lock || tile===firstTile || tile.classList.contains('matched')) return;
+      tile.classList.add('selected');
+
+      if(!firstTile){
+        firstTile = tile;
+      }else{
+        lock = true;
+        if(firstTile.textContent === tile.textContent){
+          score += 10;
+          onetScoreText.textContent='Skor: '+score;
+          speak('Yeaay bener, pinter!');
+
+          setTimeout(()=>{
+            firstTile.classList.add('matched');
+            tile.classList.add('matched');
+            resetPick();
+            matched++;
+            if(matched===totalPairs){
+              speak(`Hebat ${childName}, semua cocok!`);
+            }
+          },300);
+        }else{
+          speak('Salahh Nyil Kunyil');
+          setTimeout(resetPick,500);
+        }
+      }
+    };
+
+    grid.appendChild(tile);
+  });
+}
+
+function resetPick(){
+  document.querySelectorAll('.tile.selected').forEach(t=>t.classList.remove('selected'));
+  firstTile=null;
+  lock=false;
+}
+
+// ===== DUCK =====
+const duck=document.getElementById('duck');
+const duckArea=document.getElementById('duckArea');
+const duckScoreText=document.getElementById('duckScore');
+const duckTimerText=document.getElementById('duckTimer');
+const duckHighText=document.getElementById('duckHigh');
+
+let duckScore=0,duckTime=30,moveInt=null,timerInt=null;
+
+function loadHigh(){
+  const h=localStorage.getItem('duckHighScore')||0;
+  duckHighText.textContent='Rekor: '+h;
+  return Number(h);
+}
+
+function resetDuck(){
+  duckScore=0;
+  duckTime=30;
+  duckScoreText.textContent='0';
+  duckTimerText.textContent='30';
+  loadHigh();
+
+  clearInterval(moveInt);
+  clearInterval(timerInt);
+
+  moveDuck();
+
+  moveInt=setInterval(moveDuck,1000); // Sedikit lebih cepat (1000ms)
+  timerInt=setInterval(()=>{
+    duckTime--;
+    duckTimerText.textContent=duckTime;
+    if(duckTime<=0) endDuck();
+  },1000);
+}
+
+function endDuck(){
+  clearInterval(moveInt);
+  clearInterval(timerInt);
+
+  const high=loadHigh();
+  if(duckScore>high){
+    localStorage.setItem('duckHighScore',duckScore);
+    duckHighText.textContent='Rekor: '+duckScore;
+    speak(`Waaah rekor baru ${childName}!`);
+  }else{
+    speak(`Skormu ${duckScore}`);
+  }
+}
+
+function moveDuck(){
+  // Responsif: Menggunakan persentase agar pas di semua layar
+  // Kurangi 15% agar bebek tidak terlalu mentok pinggir (karena ukuran bebek)
+  duck.style.left = Math.random() * 85 + '%'; 
+  duck.style.top = Math.random() * 85 + '%';
+}
+
+duck.onclick=(e)=>{
+  e.stopPropagation(); // Mencegah klik tembus ke area
+  if(duckTime<=0) return;
+  duckScore++;
+  duckScoreText.textContent=duckScore;
+  speak('kwek!');
+  moveDuck();
+};
+
+duckArea.onclick=(e)=>{
+  if(e.target!==duck && duckTime>0){
+    // speak('Gak kena!'); // Dimatikan agar tidak terlalu berisik
+  }
+};
+</script>
+</body>
+</html>
